@@ -9,8 +9,14 @@ const source = {
     return {
       id: props.id,
       parent: props.parent,
+      outline_title: props.item.outline_title,
       children: props.item.children,
       title: props.item.title,
+      type: props.item.type,
+      // deleted: props.item.deleted,
+      // new: props.item.new,
+      // height: ReactDOM.findDOMNode(component).offsetHeight,
+      // restrictions: dragValidParents 
     }
   },
 
@@ -33,12 +39,6 @@ const target = {
 
     //props.move(draggedId, overId, props.parent)
 
-
-      
-      
-
-
-
     if(monitor.isOver({ shallow: true })){
       // console.log(props)
 
@@ -48,35 +48,39 @@ const target = {
         // Get horizontal middle
         let hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
 
-        let hoverThird = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 3;
+        // let hoverThird = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 3;
 
-        // Determine mouse position
+        let totalWidth = hoverBoundingRect.right - hoverBoundingRect.left;
+
+        // Determine mouse position
         let clientOffset = monitor.getClientOffset();
 
         // Get pixels to the bottom
         let hoverClientY = hoverBoundingRect.bottom - clientOffset.y;
-        
-  //     if (hoverClientY > hoverMiddleY) {
-  //       //before
-  //        props.movePlaceholderBefore(props.item.id, props.parent);
-  //     } 
-  //     else {
-  //       //after
-  //       props.movePlaceholderAfter(props.item.id, props.parent);
-  //     }   
-       
-        if(clientOffset.y >= (hoverBoundingRect.bottom - hoverThird)){
-          // console.log("bottom third");
-          
-          props.movePlaceholderChild(props.item.id, props.parent);
 
-        } 
-        else if(clientOffset.y < (hoverBoundingRect.bottom - hoverThird) && clientOffset.y > (hoverBoundingRect.top + hoverThird)){
+
+       //set up boundaries 
+
+        // console.log(totalWidth * 0.2);
+
+        if(clientOffset.x <= (totalWidth * 0.2)){
+          //we want to add this as a sibling
+
+              if (hoverClientY > hoverMiddleY) {
+                //before
+                // console.log("before");
+                 props.movePlaceholderBefore(props.item.id, props.parent);
+              } 
+              else {
+                //after
+                // console.log("after");
+                props.movePlaceholderAfter(props.item.id, props.parent);
+              }   
+
+        }else{
+          //we want to add this as a child
           // console.log("child");
-          props.movePlaceholderAfter(props.item.id, props.parent);
-        }
-        else if(clientOffset.y <= (hoverBoundingRect.top + hoverThird)){
-          props.movePlaceholderBefore(props.item.id, props.parent);
+          props.movePlaceholderChild(props.item.id, props.parent);
         }
     }
   }
@@ -102,9 +106,9 @@ export default class Item extends Component {
   render() {
     const {
       connectDropTarget, connectDragPreview, connectDragSource,
-      item: {id, title, children}, parent, move, 
+      item: {id, title, children, outline_title, type}, parent, move, 
       find, movePlaceholderBefore, movePlaceholderAfter, placeholderPos, resetPlaceholder,
-      movePlaceholderChild
+      movePlaceholderChild, drop
     } = this.props
 
     if(this.props.isDragging){
@@ -121,7 +125,7 @@ export default class Item extends Component {
             cursor: "move"
             // marginBottom: -1
           }}
-          >{title}</div>
+          >{outline_title}</div>
         )}
         <Tree
           parent={id}
@@ -133,6 +137,7 @@ export default class Item extends Component {
           placeholderPos={placeholderPos}
           resetPlaceholder={resetPlaceholder}
           movePlaceholderChild={movePlaceholderChild}
+          drop={drop}
         />
       </li>
     ))

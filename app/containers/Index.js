@@ -11,31 +11,51 @@ export default class Index extends Component {
     this.resetPlaceholder = this.resetPlaceholder.bind(this);
     this.findLastLeaf = this.findLastLeaf.bind(this);
     this.movePlaceholderChild = this.movePlaceholderChild.bind(this);
+    this.drop = this.drop.bind(this);
+    this.removeNode = this.removeNode.bind(this);
+    this._updatePositions = this._updatePositions.bind(this);
+    this.makeNew = this.makeNew.bind(this);
+    this.place = this.place.bind(this);
   }
 
   state = {
     tree: {
       id: 99999999999,
       title: 'root',
+      outline_title: 'root',
+      type: 'flow',
+      position: 0,
       children: [
         {
           id: 1, 
           title: 'Tatooine',
+          outline_title: 'Tatooine',
+          type: 'org',
+          position: 0,
           children: [
             {
               id: 2, 
-              title: 'Endor', 
+              title: 'Endor',
+              outline_title: 'Endor',
+              type: 'assistant',
+              position: 0,
               children: [
                 {
                   id: 4, 
-                  title: 'Dagobah', 
+                  title: 'Dagobah',
+                  outline_title: 'Degobah',
+                  type: 'assistant',
+                  position: 0,
                   children: []
                 }
               ]
             },
             {
               id: 3, 
-              title: 'Hoth', 
+              title: 'Hoth',
+              outline_title: 'Hoth',
+              type: 'assistant',
+              position: 1,
               children: []
             },
           ]
@@ -43,15 +63,23 @@ export default class Index extends Component {
         {
           id: 5, 
           title: 'Death Star',
+          outline_title: 'Death Star',
+          type: 'assistant',
+          position: 1,
           children: [
             {
               id: 9,
               title: 'Carlac',
-              children: []
+              outline_title: 'Carlac',
+              type: 'assistant',
+              position: 0,
             },
             {
               id: 10,
               title: 'Kalevala',
+              outline_title: 'Kalevala',
+              type: 'assistant',
+              position: 1,
               children: []
             }
           ]
@@ -59,14 +87,23 @@ export default class Index extends Component {
         {
           id: 6, 
           title: 'Alderaan',
+          outline_title: 'Alderaan',
+          type: 'assistant',
+          position: 2,
           children: [
             {
               id: 7, 
               title: 'Bespin',
+              outline_title: 'Bespin',
+              type: 'assistant',
+              position: 0,
               children: [
                 {
                   id: 8, 
-                  title: 'Jakku', 
+                  title: 'Jakku',
+                  outline_title: 'Jakku',
+                  type: 'assistant',
+                  position: 0,
                   children: []
                 }
               ]
@@ -133,11 +170,243 @@ export default class Index extends Component {
     // }
     // else{
       this.setState({
-          placeholderPos: {id: overId, position: "before"}
+          placeholderPos: {id: overId, position: "before", as: "sibling", parent: parent}
         });
     // }
 
   }
+
+  removeNode(id, items){
+    for (const node of items) {
+      if (node.id == id) {
+        var pop = items.splice(items.indexOf(node), 1);
+        return
+      }
+
+      if (node.children && node.children.length) {
+        this.removeNode(id, node.children)
+      }
+    }
+  }
+
+  _updatePositions(startIndex, endIndex, increment, arr){
+    for(var i = startIndex; i <= endIndex; i++){
+      if(arr[i].status != "deleted" && arr[i].status != "new"){
+        arr[i].status = "updated";
+      }
+      arr[i].position = i;
+    }
+  }
+
+  makeNew(outline_title, parentId, position, type, id, status, children){
+    let node = {
+      status: status,
+      outline_title: outline_title,
+      parent_id: parentId,
+      position: position,
+      type: type,
+      children: children,
+      id: id,
+    }
+
+    if(status == "new"){
+      node.tmpId = id;
+    }
+
+    return node;
+  }
+
+  place(dropObj, dest, placeholderId, placeholderAs, placeholderPosition){
+    if(placeholderAs == "sibling"){
+      if(placeholderPosition == "after"){
+        //check to see if placeholder is the last element in array
+        var siblingIndex = this._getNodeIndex(placeholderId, dest);
+        if(siblingIndex != dest.length-1){
+          // dragged to middle
+          console.log("middle");
+          let node = this.makeNew(dropObj.outline_title, placeholderId, siblingIndex+1, dropObj.type, dropObj.id, "updated", dropObj.children);
+          dest.splice(siblingIndex+1, 0, node);
+          this._updatePositions(siblingIndex+2, dest.length-1, 1, dest);
+          // this.toggleChanged();
+        }else{
+          //dragged to bottom
+          let node = this.makeNew(dropObj.outline_title, placeholderId, dest.length, dropObj.type, dropObj.id, "updated", dropObj.children)
+          dest.push(node);
+        }
+      }else{
+        //before
+        //check to see if placeholder is the first item
+        var siblingIndex = this._getNodeIndex(placeholderId, dest);
+        if(siblingIndex == 0){
+          console.log("top");
+          let node = this.makeNew(dropObj.outline_title, placeholderId, 0, dropObj.type, dropObj.id, "updated", dropObj.children);
+          dest.splice(0, 0, node);
+          this._updatePositions(1, dest.length-1, 1, dest);
+        }
+        else{
+          console.log("before middle");
+          let node = this.makeNew(dropObj.outline_title, placeholderId, siblingIndex, dropObj.type, dropObj.id, "updated", dropObj.children);
+          dest.splice(siblingIndex, 0, node);
+          this._updatePositions(siblingIndex+1, dest.length-1, 1, dest);
+        }
+      } 
+    }
+  }
+
+  drop(dropObj, placeholderPos){
+    //local vars
+    var $this = this;
+    let tree = this.state.tree;
+
+    //check placeholder
+    const placeholderId = placeholderPos.id;
+    const placeholderPosition = placeholderPos.position;
+    const placeholderAs = placeholderPos.as;
+    const placeholderParent = placeholderPos.parent;
+
+    // are we trying to drop into parent?
+    if(placeholderAs == "parent"){
+      if(placeholderId == tree.id){
+        var destObj = tree;
+      }
+      else{
+        var destObj = this.findItem(placeholderId, tree.children);
+      }
+    }
+    else{
+      if(placeholderParent == tree.id){
+        var destObj = tree;
+      }
+      else{
+        var destObj = this.findItem(placeholderParent, tree.children);
+      }
+    }
+
+    let dest = destObj.children;
+
+    console.log(dest);
+    
+    // const {status, errorMsg} = this.checkRestrictions(dropObj, destObj);
+
+    // if(status != 'success'){
+    //   //display error
+    //   notification({
+    //       message: errorMsg,
+    //       type: 'danger', // can be 'success', 'info', 'warning', 'danger'
+    //       duration: 10000, // time in milliseconds. 0 means infinite
+    //   });
+    //   return
+    // }
+
+    if(placeholderId && placeholderAs == "parent" && (_.isUndefined(dest) || _.isEmpty(dest))){
+      console.log("no children");
+
+       destObj.children = [];
+
+      //if the drop item has a tempId
+      // if(dropObj.tmpId){
+      //   //new
+      //   var node = this.makeNew(dropObj.id, parentId, 0, dropObj.id, dropObj.tmpId, "new", []);
+      // }else{
+        //existing
+
+        //item dropped from another parent
+        if(dropObj.parent != placeholderPos.id){
+          if(dropObj.parent == tree.id){
+            //drop object had no parent (was root child)
+            var draggedIndex = this._getNodeIndex(dropObj.id, tree.children);
+            this.removeNode(dropObj.id, tree.children);
+            this._updatePositions(draggedIndex, tree.children.length-1, -1, tree.children);
+           }else{
+            //item had another parent (not root child)
+            let oldParentChildren = this.findItem(dropObj.parent, tree.children).children;
+            var draggedIndex = this._getNodeIndex(dropObj.id, oldParentChildren);
+            this.removeNode(dropObj.id, tree.children);   
+            this._updatePositions(draggedIndex, oldParentChildren.length-1, -1, oldParentChildren);
+          }
+        }
+        // console.log(dropObj.children);
+        var node = this.makeNew(dropObj.outline_title, placeholderPos.id, 0, dropObj.type, dropObj.id, "updated", dropObj.children);
+      // }
+
+       destObj.children.push(node);
+    }
+    else{
+      console.log("children");
+
+      //new item is dragged
+      // if(dropObj.tmpId){
+
+      //   //if there is a sibling
+      //   if(sibling !== 0){
+
+      //     let siblingIndex = this._getNodeIndex(sibling, dest);
+      //     let node = this.makeNew(dropObj.id, parentId, siblingIndex, dropObj.id, dropObj.tmpId, "new", []);
+      //     dest.splice(siblingIndex, 0, node);
+      //     this._updatePositions(siblingIndex+1, dest.length-1, 1, dest);
+      //     this.toggleChanged();
+
+
+      //   }else{
+      //     //new item at bottom of list
+      //     let node = this.makeNew(dropObj.id, parentId, dest.length, dropObj.id, dropObj.tmpId, "new", []);
+      //     dest.push(node);
+      //     this.toggleChanged();
+      //   }
+        
+      // }
+      // else{
+        //reorder
+
+        //who is my old parent?
+        //if old parent is defined
+        if(!_.isUndefined(dropObj.parent)){
+
+          //if item dropped from another parent
+          if(dropObj.parent != placeholderPos.id){
+
+           /* 
+            * Item reordered/dropped into another parent
+            */
+            console.log(dropObj.parent);
+            if(dropObj.parent == tree.id){
+              console.log("root");
+              //drop object had no parent (was root child)
+
+              //need to update items for the root
+              //get index of item in old parent
+              var draggedIndex = this._getNodeIndex(dropObj.id, tree.children);
+              this.removeNode(dropObj.id, tree.children);
+              this._updatePositions(draggedIndex, tree.children.length-1, -1, tree.children);
+              this.place(dropObj, dest, placeholderId, placeholderAs, placeholderPosition);
+
+            }else{
+              console.log("not root");
+              //item had another parent
+
+              //need to update items in the old parent
+              //get index of item in old parent
+              let oldParentChildren = this.findItem(dropObj.parent, tree.children).children;
+              var draggedIndex = this._getNodeIndex(dropObj.id, oldParentChildren);
+              this.removeNode(dropObj.id, tree.children);
+              this._updatePositions(draggedIndex, oldParentChildren.length-1, -1, oldParentChildren);
+
+              this.place(dropObj, dest, placeholderId, placeholderAs, placeholderPosition);
+            }
+          }
+
+        }
+
+
+      // }
+    }
+    
+    this.setState({
+      tree: tree
+    });
+  }
+
+
   movePlaceholderAfter(overId, parent){
      // console.log(overId);
       let tree = this.state.tree;
@@ -152,20 +421,22 @@ export default class Index extends Component {
       let overIndex = this._getNodeIndex(overId, parentObj.children);
 
        this.setState({
-          placeholderPos: {id: overId, position: "after"}
+          placeholderPos: {id: overId, position: "after", as: "sibling", parent: parent}
         });
   }
 
   movePlaceholderChild(overId, parent){
-    console.log(overId);
     let tree = this.state.tree;
     var overObj = this.findItem(overId, tree.children);
-
       if(!overObj.children || _.isEmpty(overObj.children)){
         this.setState({
-          placeholderPos: {id: overObj.id, position: "parent"}
+          placeholderPos: {id: overObj.id, position: "after", as: "parent", parent: parent}
         });
-      }
+       }//else{
+      //   this.setState({
+      //     placeholderPos: {id: overObj.id, position: "before", as: "parent"}
+      //   });
+      // }
   }
 
   findLastLeaf(rootNode){
@@ -244,6 +515,7 @@ export default class Index extends Component {
         placeholderPos={this.state.placeholderPos}
         resetPlaceholder={this.resetPlaceholder}
         movePlaceholderChild={this.movePlaceholderChild}
+        drop={this.drop}
       />
     </div>
   }
