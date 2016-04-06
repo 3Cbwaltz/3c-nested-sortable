@@ -9,13 +9,13 @@ export default class Index extends Component {
     this.movePlaceholderAfter = this.movePlaceholderAfter.bind(this);
     this._getNodeIndex = this._getNodeIndex.bind(this);
     this.resetPlaceholder = this.resetPlaceholder.bind(this);
-    this.findLastLeaf = this.findLastLeaf.bind(this);
     this.movePlaceholderChild = this.movePlaceholderChild.bind(this);
     this.drop = this.drop.bind(this);
     this.removeNode = this.removeNode.bind(this);
     this._updatePositions = this._updatePositions.bind(this);
     this.makeNew = this.makeNew.bind(this);
     this.place = this.place.bind(this);
+    this.moveToParent = this.moveToParent.bind(this);
   }
 
   state = {
@@ -25,6 +25,8 @@ export default class Index extends Component {
       outline_title: 'root',
       type: 'flow',
       position: 0,
+      parent: null,
+      real_depth: 0,
       children: [
         {
           id: 1, 
@@ -32,6 +34,8 @@ export default class Index extends Component {
           outline_title: 'Tatooine',
           type: 'org',
           position: 0,
+          parent: 99999999999,
+          real_depth: 1,
           children: [
             {
               id: 2, 
@@ -39,6 +43,8 @@ export default class Index extends Component {
               outline_title: 'Endor',
               type: 'assistant',
               position: 0,
+              parent: 1,
+              real_depth: 2,
               children: [
                 {
                   id: 4, 
@@ -46,6 +52,8 @@ export default class Index extends Component {
                   outline_title: 'Degobah',
                   type: 'assistant',
                   position: 0,
+                  parent: 2,
+                  real_depth: 3,
                   children: []
                 }
               ]
@@ -56,6 +64,8 @@ export default class Index extends Component {
               outline_title: 'Hoth',
               type: 'assistant',
               position: 1,
+              parent: 1,
+              real_depth: 2,
               children: []
             },
           ]
@@ -66,12 +76,16 @@ export default class Index extends Component {
           outline_title: 'Death Star',
           type: 'assistant',
           position: 1,
+          parent: 99999999999,
+          real_depth: 1,
           children: [
             {
               id: 9,
               title: 'Carlac',
               outline_title: 'Carlac',
               type: 'assistant',
+              real_depth: 2,
+              parent: 5,
               position: 0,
             },
             {
@@ -79,6 +93,8 @@ export default class Index extends Component {
               title: 'Kalevala',
               outline_title: 'Kalevala',
               type: 'assistant',
+              real_depth: 2,
+              parent: 5,
               position: 1,
               children: []
             }
@@ -89,7 +105,9 @@ export default class Index extends Component {
           title: 'Alderaan',
           outline_title: 'Alderaan',
           type: 'assistant',
+          real_depth: 1,
           position: 2,
+          parent: 99999999999,
           children: [
             {
               id: 7, 
@@ -97,6 +115,8 @@ export default class Index extends Component {
               outline_title: 'Bespin',
               type: 'assistant',
               position: 0,
+              parent: 6,
+              real_depth: 2,
               children: [
                 {
                   id: 8, 
@@ -104,6 +124,8 @@ export default class Index extends Component {
                   outline_title: 'Jakku',
                   type: 'assistant',
                   position: 0,
+                  real_depth: 3,
+                  parent: 7,
                   children: []
                 }
               ]
@@ -133,8 +155,59 @@ export default class Index extends Component {
     });
   }
 
-  movePlaceholderBefore(overId, parent){
-    // console.log(overId);
+  moveToParent(parent, placeholderPos, realDepth){
+    // console.log(parent);
+    // console.log(placeholderPos);
+    let tree = this.state.tree;
+    
+    if(parent == tree.id){
+      var parentObj = tree;
+    }else{
+      var parentObj = this.findItem(parent, tree.children);
+    }
+
+    console.log(parentObj.real_depth);
+    console.log(placeholderPos.parentDepth);
+
+    //where was the placeholder
+
+    //are we going in or out?
+
+    if(placeholderPos.parentDepth){
+      if(parentObj.real_depth < placeholderPos.parentDepth){
+        //out
+        // find nearest sibling in target parent and move placeholder above
+        console.log("out");
+        var placeholderParent = this.findItem(placeholderPos.parent, tree.children);
+        this.setState({
+          placeholderPos: {id: placeholderParent.id, position: "after", as: "sibling", parent: placeholderParent.parent, parentDepth: placeholderParent.real_depth}
+        });
+      }else{
+        //in
+        console.log("in");
+        // //add placeholder to bottom of current level
+        this.setState({
+          placeholderPos: {id: parentObj.children[parentObj.children.length-1].id, position: "after", as: "sibling", parent: parentObj.children[parentObj.children.length-1].id.parent, parentDepth: parentObj.children[parentObj.children.length-1].real_depth-1}
+        });
+      }
+    }
+
+
+
+
+    // if(parent == tree.id){
+    //   var placeholderParent = tree;
+    // }
+    // else{
+    //   var placeholderParent = this.findItem(parent, tree.children);
+    // }
+      
+    // this.setState({
+    //     placeholderPos: {id: placeholderParent.children[placeholderParent.children.length-1].id, position: "after", as: "sibling", parent: placeholderParent.parent}
+    //   });
+  }
+
+  movePlaceholderBefore(overObj, parent, parentDepth){
     let tree = this.state.tree;
     if(parent != tree.id){
       var parentObj = this.findItem(parent, tree.children);
@@ -144,7 +217,7 @@ export default class Index extends Component {
     }
     // console.log(parentObj);
     //who is above me
-    let overIndex = this._getNodeIndex(overId, parentObj.children);
+    let overIndex = this._getNodeIndex(overObj.id, parentObj.children);
 
     // if(overIndex != 0){
     //   // console.log("not zero");
@@ -170,7 +243,7 @@ export default class Index extends Component {
     // }
     // else{
       this.setState({
-          placeholderPos: {id: overId, position: "before", as: "sibling", parent: parent}
+          placeholderPos: {id: overObj.id, realDepth: overObj.real_depth, position: "before", as: "sibling", parent: parent, parentDepth: parentDepth}
         });
     // }
 
@@ -254,6 +327,7 @@ export default class Index extends Component {
   }
 
   drop(dropObj, placeholderPos){
+    console.log(placeholderPos);
     //local vars
     var $this = this;
     let tree = this.state.tree;
@@ -333,6 +407,7 @@ export default class Index extends Component {
     }
     else{
       console.log("children");
+      console.log(dropObj.parent);
 
       //new item is dragged
       // if(dropObj.tmpId){
@@ -363,7 +438,7 @@ export default class Index extends Component {
         if(!_.isUndefined(dropObj.parent)){
 
           //if item dropped from another parent
-          if(dropObj.parent != placeholderPos.id){
+          if(dropObj.parent != placeholderParent){
 
            /* 
             * Item reordered/dropped into another parent
@@ -400,14 +475,14 @@ export default class Index extends Component {
 
       // }
     }
-    
+
     this.setState({
       tree: tree
     });
   }
 
 
-  movePlaceholderAfter(overId, parent){
+  movePlaceholderAfter(overObj, parent, parentDepth){
      // console.log(overId);
       let tree = this.state.tree;
       if(parent != tree.id){
@@ -418,36 +493,25 @@ export default class Index extends Component {
       }
       // console.log(parentObj);
       //who is below me
-      let overIndex = this._getNodeIndex(overId, parentObj.children);
+      let overIndex = this._getNodeIndex(overObj.id, parentObj.children);
 
        this.setState({
-          placeholderPos: {id: overId, position: "after", as: "sibling", parent: parent}
+          placeholderPos: {id: overObj.id, realDepth: overObj.real_depth, position: "after", as: "sibling", parent: parent, parentDepth: parentDepth}
         });
   }
 
-  movePlaceholderChild(overId, parent){
+  movePlaceholderChild(overObj, parent, parentDepth){
     let tree = this.state.tree;
-    var overObj = this.findItem(overId, tree.children);
+    //var overObj = this.findItem(overObj.id, tree.children);
       if(!overObj.children || _.isEmpty(overObj.children)){
         this.setState({
-          placeholderPos: {id: overObj.id, position: "after", as: "parent", parent: parent}
+          placeholderPos: {id: overObj.id, realDepth: overObj.real_depth, position: "after", as: "parent", parent: parent, parentDepth: parentDepth}
         });
-       }//else{
-      //   this.setState({
-      //     placeholderPos: {id: overObj.id, position: "before", as: "parent"}
-      //   });
-      // }
-  }
-
-  findLastLeaf(rootNode){
-    if (rootNode.children && rootNode.children.length){
-      var last = this.findLastLeaf(rootNode.children[rootNode.children.length-1]);
-    }
-    else{
-      return rootNode;
-    }
-
-    return last;
+       }else{
+        this.setState({
+          placeholderPos: {id: overObj.children[0].id, realDepth: overObj.children[0].real_depth, position: "before", as: "sibling", parent: overObj.children[0].parent, parentDepth: parentDepth}
+        });
+      }
   }
 
   moveItem(id, afterId, nodeId) {
@@ -502,7 +566,7 @@ export default class Index extends Component {
   }
 
   render() {
-    // const {tree} = this.state;
+    console.log(this.state);
 
     return <div>
       <Tree
@@ -516,6 +580,8 @@ export default class Index extends Component {
         resetPlaceholder={this.resetPlaceholder}
         movePlaceholderChild={this.movePlaceholderChild}
         drop={this.drop}
+        moveToParent={this.moveToParent}
+        realDepth={this.state.tree.real_depth}
       />
     </div>
   }

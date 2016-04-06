@@ -68,19 +68,16 @@ const target = {
 
               if (hoverClientY > hoverMiddleY) {
                 //before
-                // console.log("before");
-                 props.movePlaceholderBefore(props.item.id, props.parent);
+                 props.movePlaceholderBefore(props.item, props.parent, props.parentDepth);
               } 
               else {
                 //after
-                // console.log("after");
-                props.movePlaceholderAfter(props.item.id, props.parent);
+                props.movePlaceholderAfter(props.item, props.parent, props.parentDepth);
               }   
 
         }else{
           //we want to add this as a child
-          // console.log("child");
-          props.movePlaceholderChild(props.item.id, props.parent);
+          props.movePlaceholderChild(props.item, props.parent, props.parentDepth);
         }
     }
   }
@@ -106,9 +103,9 @@ export default class Item extends Component {
   render() {
     const {
       connectDropTarget, connectDragPreview, connectDragSource,
-      item: {id, title, children, outline_title, type}, parent, move, 
+      item: {id, title, children, outline_title, type, real_depth}, parent, move, 
       find, movePlaceholderBefore, movePlaceholderAfter, placeholderPos, resetPlaceholder,
-      movePlaceholderChild, drop
+      movePlaceholderChild, drop, moveToParent
     } = this.props
 
     if(this.props.isDragging){
@@ -138,6 +135,8 @@ export default class Item extends Component {
           resetPlaceholder={resetPlaceholder}
           movePlaceholderChild={movePlaceholderChild}
           drop={drop}
+          moveToParent={moveToParent}
+          realDepth={real_depth}
         />
       </li>
     ))

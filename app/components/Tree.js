@@ -27,6 +27,10 @@ const target = {
     // props.move(draggedId, props.id, props.parent)
     // console.log(props.parent);
     // props.movePlaceholderChild(props.parent, null);
+    if(props.placeholderPos.parent != props.parent){
+      console.log(props.placeholderPos);
+      props.moveToParent(props.parent, props.placeholderPos, props.realDepth);
+    }
   }
 }
 
@@ -47,7 +51,8 @@ export default class Tree extends Component {
     // console.log(this.props.placeholderPos);
     const {connectDropTarget, children, parent, move, find, 
       movePlaceholderBefore, movePlaceholderAfter,
-    placeholderPos, resetPlaceholder, movePlaceholderChild, isOverCurrent, drop} = this.props
+    placeholderPos, resetPlaceholder, movePlaceholderChild, isOverCurrent, drop,
+    moveToParent, realDepth} = this.props
   
     if(children && !_.isEmpty(children)){
       var itemArr = [];
@@ -56,7 +61,7 @@ export default class Tree extends Component {
         if(this.props.placeholderPos.position == "before"){
           if(this.props.placeholderPos.as == "sibling"){
             if(/*(isOver && this.state.restrictionsPassed) &&*/ item.id === this.props.placeholderPos.id){
-                itemArr.push(<li style={{backgroundColor: "grey", height: "50px", listStyleType: "none"}} key="placeholder"></li>);
+                itemArr.push(<li style={{backgroundColor: "#ddd", height: "50px", listStyleType: "none"}} key="placeholder"></li>);
             }
           }else{
             // if(/*(isOver && this.state.restrictionsPassed) &&*/ parent === this.props.placeholderPos.id){
@@ -64,7 +69,7 @@ export default class Tree extends Component {
             // }
           }
         }
-        
+
         itemArr.push(
           <Item
               key={item.id}
@@ -79,13 +84,15 @@ export default class Tree extends Component {
               resetPlaceholder={resetPlaceholder}
               movePlaceholderChild={movePlaceholderChild}
               drop={drop}
+              moveToParent={moveToParent}
+              parentDepth={realDepth}
             />
         );
 
         if(this.props.placeholderPos.as == "sibling"){
           if(this.props.placeholderPos.position == "after"){
             if(/*(isOver && this.state.restrictionsPassed) &&*/ item.id === this.props.placeholderPos.id){
-                itemArr.push(<li style={{backgroundColor: "grey", height: "50px", listStyleType: "none"}} key="placeholder"></li>);
+                itemArr.push(<li style={{backgroundColor: "#ddd", height: "50px", listStyleType: "none"}} key="placeholder"></li>);
             }
           }
         }
@@ -95,7 +102,7 @@ export default class Tree extends Component {
       var itemArr = [];
       if(this.props.placeholderPos.as == "parent"){
        if(/*(isOver && this.state.restrictionsPassed) &&*/ parent === this.props.placeholderPos.id){
-            itemArr.push(<li style={{backgroundColor: "grey", height: "50px", listStyleType: "none"}} key="placeholder"></li>);
+            itemArr.push(<li style={{backgroundColor: "#ddd", height: "50px", listStyleType: "none"}} key="placeholder"></li>);
         }
       }
     }
@@ -103,7 +110,7 @@ export default class Tree extends Component {
     var style = {
       position: 'relative',
         // marginLeft: '2em',
-        // border: "1px solid black",
+        border: "1px solid black",
         // backgroundColor: "#ccc",
         // minHeight: 10,
         // paddingTop: 10,
