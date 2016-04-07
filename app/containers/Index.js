@@ -166,7 +166,7 @@ export default class Index extends Component {
       var parentObj = this.findItem(parent, tree.children);
     }
 
-    console.log(parentObj.real_depth);
+    console.log(parentObj);
     console.log(placeholderPos.parentDepth);
 
     //where was the placeholder
@@ -184,11 +184,13 @@ export default class Index extends Component {
         });
       }else{
         //in
-        console.log("in");
-        // //add placeholder to bottom of current level
-        this.setState({
-          placeholderPos: {id: parentObj.children[parentObj.children.length-1].id, position: "after", as: "sibling", parent: parentObj.children[parentObj.children.length-1].id.parent, parentDepth: parentObj.children[parentObj.children.length-1].real_depth-1}
-        });
+        if(parentObj.children && parentObj.children.length){
+          console.log("in");
+          // //add placeholder to bottom of current level
+          this.setState({
+            placeholderPos: {id: parentObj.children[parentObj.children.length-1].id, position: "after", as: "sibling", parent: parentObj.children[parentObj.children.length-1].parent, parentDepth: parentObj.children[parentObj.children.length-1].real_depth-1}
+          });
+        }
       }
     }
 
