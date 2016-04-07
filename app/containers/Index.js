@@ -22,7 +22,6 @@ export default class Index extends Component {
     tree: {
       id: 99999999999,
       title: 'root',
-      outline_title: 'root',
       type: 'flow',
       position: 0,
       parent: null,
@@ -31,7 +30,6 @@ export default class Index extends Component {
         {
           id: 1, 
           title: 'Tatooine',
-          outline_title: 'Tatooine',
           type: 'org',
           position: 0,
           parent: 99999999999,
@@ -40,7 +38,6 @@ export default class Index extends Component {
             {
               id: 2, 
               title: 'Endor',
-              outline_title: 'Endor',
               type: 'assistant',
               position: 0,
               parent: 1,
@@ -49,7 +46,6 @@ export default class Index extends Component {
                 {
                   id: 4, 
                   title: 'Dagobah',
-                  outline_title: 'Degobah',
                   type: 'assistant',
                   position: 0,
                   parent: 2,
@@ -61,7 +57,6 @@ export default class Index extends Component {
             {
               id: 3, 
               title: 'Hoth',
-              outline_title: 'Hoth',
               type: 'assistant',
               position: 1,
               parent: 1,
@@ -73,7 +68,6 @@ export default class Index extends Component {
         {
           id: 5, 
           title: 'Death Star',
-          outline_title: 'Death Star',
           type: 'assistant',
           position: 1,
           parent: 99999999999,
@@ -82,7 +76,6 @@ export default class Index extends Component {
             {
               id: 9,
               title: 'Carlac',
-              outline_title: 'Carlac',
               type: 'assistant',
               real_depth: 2,
               parent: 5,
@@ -91,7 +84,6 @@ export default class Index extends Component {
             {
               id: 10,
               title: 'Kalevala',
-              outline_title: 'Kalevala',
               type: 'assistant',
               real_depth: 2,
               parent: 5,
@@ -103,7 +95,6 @@ export default class Index extends Component {
         {
           id: 6, 
           title: 'Alderaan',
-          outline_title: 'Alderaan',
           type: 'assistant',
           real_depth: 1,
           position: 2,
@@ -112,7 +103,6 @@ export default class Index extends Component {
             {
               id: 7, 
               title: 'Bespin',
-              outline_title: 'Bespin',
               type: 'assistant',
               position: 0,
               parent: 6,
@@ -121,7 +111,6 @@ export default class Index extends Component {
                 {
                   id: 8, 
                   title: 'Jakku',
-                  outline_title: 'Jakku',
                   type: 'assistant',
                   position: 0,
                   real_depth: 3,
@@ -166,8 +155,8 @@ export default class Index extends Component {
       var parentObj = this.findItem(parent, tree.children);
     }
 
-    console.log(parentObj);
-    console.log(placeholderPos.parentDepth);
+    // console.log(parentObj);
+    // console.log(placeholderPos.parentDepth);
 
     //where was the placeholder
 
@@ -193,20 +182,6 @@ export default class Index extends Component {
         }
       }
     }
-
-
-
-
-    // if(parent == tree.id){
-    //   var placeholderParent = tree;
-    // }
-    // else{
-    //   var placeholderParent = this.findItem(parent, tree.children);
-    // }
-      
-    // this.setState({
-    //     placeholderPos: {id: placeholderParent.children[placeholderParent.children.length-1].id, position: "after", as: "sibling", parent: placeholderParent.parent}
-    //   });
   }
 
   movePlaceholderBefore(overObj, parent, parentDepth){
@@ -217,37 +192,13 @@ export default class Index extends Component {
     else{
       var parentObj = tree;
     }
-    // console.log(parentObj);
+
     //who is above me
     let overIndex = this._getNodeIndex(overObj.id, parentObj.children);
 
-    // if(overIndex != 0){
-    //   // console.log("not zero");
-    //   //Not over the first item
-    //   var nextObj = parentObj.children[overIndex - 1];
-
-    //   //is nextObj a parent?
-    //   if(nextObj.children && !_.isEmpty(nextObj.children)){
-    //     // console.log("has children");
-    //     //find last leaf
-    //     var lastChild = nextObj.children[nextObj.children.length-1];
-    //     var lastLeaf = this.findLastLeaf(lastChild);
-    //     this.setState({
-    //       placeholderPos: {id: lastLeaf.id, position: "after"}
-    //     });
-
-    //   }else{
-    //     this.setState({
-    //       placeholderPos: {id: overId, position: "before"}
-    //     });
-    //   }
-
-    // }
-    // else{
-      this.setState({
-          placeholderPos: {id: overObj.id, realDepth: overObj.real_depth, position: "before", as: "sibling", parent: parent, parentDepth: parentDepth}
-        });
-    // }
+    this.setState({
+      placeholderPos: {id: overObj.id, realDepth: overObj.real_depth, position: "before", as: "sibling", parent: parent, parentDepth: parentDepth}
+    });
 
   }
 
@@ -273,10 +224,10 @@ export default class Index extends Component {
     }
   }
 
-  makeNew(outline_title, parentId, position, type, id, status, children){
+  makeNew(title, parentId, position, type, id, status, children){
     let node = {
       status: status,
-      outline_title: outline_title,
+      title: title,
       parent_id: parentId,
       position: position,
       type: type,
@@ -299,13 +250,13 @@ export default class Index extends Component {
         if(siblingIndex != dest.length-1){
           // dragged to middle
           console.log("middle");
-          let node = this.makeNew(dropObj.outline_title, placeholderId, siblingIndex+1, dropObj.type, dropObj.id, "updated", dropObj.children);
+          let node = this.makeNew(dropObj.title, placeholderId, siblingIndex+1, dropObj.type, dropObj.id, "updated", dropObj.children);
           dest.splice(siblingIndex+1, 0, node);
           this._updatePositions(siblingIndex+2, dest.length-1, 1, dest);
           // this.toggleChanged();
         }else{
           //dragged to bottom
-          let node = this.makeNew(dropObj.outline_title, placeholderId, dest.length, dropObj.type, dropObj.id, "updated", dropObj.children)
+          let node = this.makeNew(dropObj.title, placeholderId, dest.length, dropObj.type, dropObj.id, "updated", dropObj.children)
           dest.push(node);
         }
       }else{
@@ -314,13 +265,13 @@ export default class Index extends Component {
         var siblingIndex = this._getNodeIndex(placeholderId, dest);
         if(siblingIndex == 0){
           console.log("top");
-          let node = this.makeNew(dropObj.outline_title, placeholderId, 0, dropObj.type, dropObj.id, "updated", dropObj.children);
+          let node = this.makeNew(dropObj.title, placeholderId, 0, dropObj.type, dropObj.id, "updated", dropObj.children);
           dest.splice(0, 0, node);
           this._updatePositions(1, dest.length-1, 1, dest);
         }
         else{
           console.log("before middle");
-          let node = this.makeNew(dropObj.outline_title, placeholderId, siblingIndex, dropObj.type, dropObj.id, "updated", dropObj.children);
+          let node = this.makeNew(dropObj.title, placeholderId, siblingIndex, dropObj.type, dropObj.id, "updated", dropObj.children);
           dest.splice(siblingIndex, 0, node);
           this._updatePositions(siblingIndex+1, dest.length-1, 1, dest);
         }
@@ -329,7 +280,6 @@ export default class Index extends Component {
   }
 
   drop(dropObj, placeholderPos){
-    console.log(placeholderPos);
     //local vars
     var $this = this;
     let tree = this.state.tree;
@@ -380,10 +330,10 @@ export default class Index extends Component {
        destObj.children = [];
 
       //if the drop item has a tempId
-      // if(dropObj.tmpId){
-      //   //new
-      //   var node = this.makeNew(dropObj.id, parentId, 0, dropObj.id, dropObj.tmpId, "new", []);
-      // }else{
+      if(dropObj.tmpId){
+        //new
+        var node = this.makeNew(dropObj.id, placeholderId, 0, dropObj.id, dropObj.tmpId, "new", []);
+      }else{
         //existing
 
         //item dropped from another parent
@@ -402,37 +352,16 @@ export default class Index extends Component {
           }
         }
         // console.log(dropObj.children);
-        var node = this.makeNew(dropObj.outline_title, placeholderPos.id, 0, dropObj.type, dropObj.id, "updated", dropObj.children);
-      // }
+        var node = this.makeNew(dropObj.title, placeholderId, 0, dropObj.type, dropObj.id, "updated", dropObj.children);
+      }
 
        destObj.children.push(node);
-    }
-    else{
-      console.log("children");
-      console.log(dropObj.parent);
-
+    }else{
       //new item is dragged
-      // if(dropObj.tmpId){
-
-      //   //if there is a sibling
-      //   if(sibling !== 0){
-
-      //     let siblingIndex = this._getNodeIndex(sibling, dest);
-      //     let node = this.makeNew(dropObj.id, parentId, siblingIndex, dropObj.id, dropObj.tmpId, "new", []);
-      //     dest.splice(siblingIndex, 0, node);
-      //     this._updatePositions(siblingIndex+1, dest.length-1, 1, dest);
-      //     this.toggleChanged();
-
-
-      //   }else{
-      //     //new item at bottom of list
-      //     let node = this.makeNew(dropObj.id, parentId, dest.length, dropObj.id, dropObj.tmpId, "new", []);
-      //     dest.push(node);
-      //     this.toggleChanged();
-      //   }
-        
-      // }
-      // else{
+      if(dropObj.tmpId){
+        this.place(dropObj, dest, placeholderId, placeholderAs, placeholderPosition);
+      }
+      else{
         //reorder
 
         //who is my old parent?
@@ -445,7 +374,6 @@ export default class Index extends Component {
            /* 
             * Item reordered/dropped into another parent
             */
-            console.log(dropObj.parent);
             if(dropObj.parent == tree.id){
               console.log("root");
               //drop object had no parent (was root child)
@@ -471,11 +399,8 @@ export default class Index extends Component {
               this.place(dropObj, dest, placeholderId, placeholderAs, placeholderPosition);
             }
           }
-
         }
-
-
-      // }
+      }
     }
 
     this.setState({
@@ -568,7 +493,7 @@ export default class Index extends Component {
   }
 
   render() {
-    console.log(this.state);
+    // console.log(this.state);
 
     return <div>
       <Tree

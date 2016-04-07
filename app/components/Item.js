@@ -31,54 +31,42 @@ const target = {
   },
 
   hover(props, monitor, component) {
-    // const {id: draggedId} = monitor.getItem()
-    // const {id: overId} = props
-
-    // if (draggedId == overId || draggedId == props.parent) return
-    // if (!monitor.isOver({shallow: true})) return
-
-    //props.move(draggedId, overId, props.parent)
 
     if(monitor.isOver({ shallow: true })){
-      // console.log(props)
 
-           // Determine rectangle on screen
-        let hoverBoundingRect = ReactDOM.findDOMNode(component).getBoundingClientRect();
+      // Determine rectangle on screen
+      let hoverBoundingRect = ReactDOM.findDOMNode(component).getBoundingClientRect();
 
-        // Get horizontal middle
-        let hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+      // Get horizontal middle
+      let hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
 
-        // let hoverThird = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 3;
+      // let hoverThird = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 3;
 
-        let totalWidth = hoverBoundingRect.right - hoverBoundingRect.left;
+      let totalWidth = hoverBoundingRect.right - hoverBoundingRect.left;
 
-        // Determine mouse position
-        let clientOffset = monitor.getClientOffset();
+      // Determine mouse position
+      let clientOffset = monitor.getClientOffset();
 
-        // Get pixels to the bottom
-        let hoverClientY = hoverBoundingRect.bottom - clientOffset.y;
-
+      // Get pixels to the bottom
+      let hoverClientY = hoverBoundingRect.bottom - clientOffset.y;
 
        //set up boundaries 
+      if(clientOffset.x <= (totalWidth * 0.2)){
+        //we want to add this as a sibling
 
-        // console.log(totalWidth * 0.2);
+        if (hoverClientY > hoverMiddleY) {
+          //before
+           props.movePlaceholderBefore(props.item, props.parent, props.parentDepth);
+        } 
+        else {
+          //after
+          props.movePlaceholderAfter(props.item, props.parent, props.parentDepth);
+        }   
 
-        if(clientOffset.x <= (totalWidth * 0.2)){
-          //we want to add this as a sibling
-
-              if (hoverClientY > hoverMiddleY) {
-                //before
-                 props.movePlaceholderBefore(props.item, props.parent, props.parentDepth);
-              } 
-              else {
-                //after
-                props.movePlaceholderAfter(props.item, props.parent, props.parentDepth);
-              }   
-
-        }else{
-          //we want to add this as a child
-          props.movePlaceholderChild(props.item, props.parent, props.parentDepth);
-        }
+      }else{
+        //we want to add this as a child
+        props.movePlaceholderChild(props.item, props.parent, props.parentDepth);
+      }
     }
   }
 }
@@ -122,7 +110,7 @@ export default class Item extends Component {
             cursor: "move"
             // marginBottom: -1
           }}
-          >{outline_title}</div>
+          >{title}</div>
         )}
         <Tree
           parent={id}
