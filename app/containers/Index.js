@@ -1,8 +1,38 @@
 import React, { Component } from 'react'
 import Tree from '../components/Tree'
+import DragList from '../components/DragList'
 import _ from 'lodash'
 
 export default class Index extends Component {
+
+  dragRestrictions = {
+    org: {
+      validParents: ['flow','org'], 
+      validChildren: '*', 
+    },
+    flow: {
+      validParents: [], 
+      validChildren: ['org'], 
+    },
+    assistant: {
+      validParents: '*', 
+      validChildren: [], 
+    },
+    html: {
+      validParents: '*', 
+      validChildren: [], 
+    },
+    game: {
+      validParents: '*', 
+      validChildren: [], 
+    },
+    iframe: {
+      validParents: '*', 
+      validChildren: [], 
+    },
+  };
+
+
   constructor(props) {
     super(props);
     this.movePlaceholderBefore = this.movePlaceholderBefore.bind(this);
@@ -16,6 +46,7 @@ export default class Index extends Component {
     this.makeNew = this.makeNew.bind(this);
     this.place = this.place.bind(this);
     this.moveToParent = this.moveToParent.bind(this);
+    this.checkRestrictions = this.checkRestrictions.bind(this);
   }
 
   state = {
@@ -68,7 +99,7 @@ export default class Index extends Component {
         {
           id: 5, 
           title: 'Death Star',
-          type: 'assistant',
+          type: 'org',
           position: 1,
           parent: 99999999999,
           real_depth: 1,
@@ -95,7 +126,7 @@ export default class Index extends Component {
         {
           id: 6, 
           title: 'Alderaan',
-          type: 'assistant',
+          type: 'org',
           real_depth: 1,
           position: 2,
           parent: 99999999999,
@@ -126,7 +157,19 @@ export default class Index extends Component {
     placeholderPos:{
       id: 0,
       position: null
-    }
+    },
+    nodeItems: [
+      {
+          title: "Org",
+          type: "org",
+          description: "Node 1 description"
+      },
+      {
+          title: "Assistant",
+          type: "assistant",
+          description: "Node 2 description"
+      },
+    ]
   };
 
   _getNodeIndex(id, arr){
@@ -279,6 +322,42 @@ export default class Index extends Component {
     }
   }
 
+  checkRestrictions(dropObj, parentObj){
+
+    let destination_type = parentObj.type;
+    let dropObj_type = dropObj.type;
+
+    let restrictionsPassed = true;
+    let msg = '';
+
+    let destinationValidChildren = this.dragRestrictions[destination_type].validChildren;
+    let dropObjValidParents = this.dragRestrictions[dropObj_type].validParents;
+
+    if(destinationValidChildren != '*'){
+      if(destinationValidChildren.indexOf(dropObj_type) == -1){
+        restrictionsPassed = false;
+        msg = "Type " + dropObj_type.toUpperCase() + " is not a valid child of "+ destination_type.toUpperCase();
+      }
+    }
+
+    if(dropObjValidParents != '*'){
+      if(dropObjValidParents.indexOf(dropObj_type) == -1){
+        restrictionsPassed = false;
+        msg = "Type " + destination_type.toUpperCase() + " is not a valid parent of "+ dropObj_type.toUpperCase();
+      }
+    }
+
+    this.setState({
+      restrictionsPassed: restrictionsPassed
+    });
+
+    if(!restrictionsPassed){
+      return { status: "error", errorMsg: msg };
+    }else{
+      return { status: "success" };
+    }
+  }
+
   drop(dropObj, placeholderPos){
     //local vars
     var $this = this;
@@ -312,17 +391,19 @@ export default class Index extends Component {
 
     console.log(dest);
     
-    // const {status, errorMsg} = this.checkRestrictions(dropObj, destObj);
+    const {status, errorMsg} = this.checkRestrictions(dropObj, destObj);
 
-    // if(status != 'success'){
-    //   //display error
-    //   notification({
-    //       message: errorMsg,
-    //       type: 'danger', // can be 'success', 'info', 'warning', 'danger'
-    //       duration: 10000, // time in milliseconds. 0 means infinite
-    //   });
-    //   return
-    // }
+    if(status != 'success'){
+      //display error
+      // notification({
+      //     message: errorMsg,
+      //     type: 'danger', // can be 'success', 'info', 'warning', 'danger'
+      //     duration: 10000, // time in milliseconds. 0 means infinite
+      // });
+      alert(errorMsg);
+      return
+
+    }
 
     if(placeholderId && placeholderAs == "parent" && (_.isUndefined(dest) || _.isEmpty(dest))){
       console.log("no children");
@@ -331,8 +412,9 @@ export default class Index extends Component {
 
       //if the drop item has a tempId
       if(dropObj.tmpId){
+        console.log("new");
         //new
-        var node = this.makeNew(dropObj.id, placeholderId, 0, dropObj.id, dropObj.tmpId, "new", []);
+        var node = this.makeNew(dropObj.title, placeholderId, 0, dropObj.id, dropObj.tmpId, "new", []);
       }else{
         //existing
 
@@ -357,8 +439,10 @@ export default class Index extends Component {
 
        destObj.children.push(node);
     }else{
+      console.log("children");
       //new item is dragged
       if(dropObj.tmpId){
+        console.log("new");
         this.place(dropObj, dest, placeholderId, placeholderAs, placeholderPosition);
       }
       else{
@@ -493,7 +577,6 @@ export default class Index extends Component {
   }
 
   render() {
-    // console.log(this.state);
 
     return <div>
       <Tree
@@ -509,7 +592,10 @@ export default class Index extends Component {
         drop={this.drop}
         moveToParent={this.moveToParent}
         realDepth={this.state.tree.real_depth}
+        dragRestrictions={this.dragRestrictions}
+        type={this.state.tree.type}
       />
+      <DragList items={this.state.nodeItems} dragRestrictions={this.dragRestrictions} />
     </div>
   }
 }

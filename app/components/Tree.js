@@ -2,6 +2,7 @@ import React, { Component, PropTypes } from 'react'
 import { DropTarget } from 'react-dnd'
 import Item from './Item'
 import _ from 'lodash'
+import $ from 'jquery';
 
 const target = {
   drop(props, monitor, component) {
@@ -15,16 +16,23 @@ const target = {
     props.resetPlaceholder();
   },
 
-  hover(props, monitor) {
-    const {id: draggedId, parent, items} = monitor.getItem()
+  hover(props, monitor, component) {
+    const {id: draggedId, parent, items, restrictions, type} = monitor.getItem()
+    // console.log(component);
+    
 
     if (!monitor.isOver({shallow: true})) return
 
     // if (descendantNode) return
     if (parent == props.parent || draggedId == props.parent) return
+
+
+
+    // component.setState({
+    //   restrictionsPassed: restrictionsPassed
+    // });
       
     if(props.placeholderPos.parent != props.parent){
-      console.log(props.placeholderPos);
       props.moveToParent(props.parent, props.placeholderPos, props.realDepth);
     }
   }
@@ -43,12 +51,16 @@ export default class Tree extends Component {
     find   : PropTypes.func.isRequired
   };
 
+  state = {
+    restrictionsPassed: true
+  };
+
   render() {
-    // console.log(this.props.placeholderPos);
+    // console.log(this.state.restrictionsPassed);
     const {connectDropTarget, children, parent, move, find, 
       movePlaceholderBefore, movePlaceholderAfter,
     placeholderPos, resetPlaceholder, movePlaceholderChild, isOverCurrent, drop,
-    moveToParent, realDepth} = this.props
+    moveToParent, realDepth, dragRestrictions, type} = this.props
   
     if(children && !_.isEmpty(children)){
       var itemArr = [];
@@ -56,7 +68,7 @@ export default class Tree extends Component {
 
         if(this.props.placeholderPos.position == "before"){
           if(this.props.placeholderPos.as == "sibling"){
-            if(/*(isOver && this.state.restrictionsPassed) &&*/ item.id === this.props.placeholderPos.id){
+            if(item.id === this.props.placeholderPos.id){
                 itemArr.push(<li style={{backgroundColor: "#ccc", height: "50px", listStyleType: "none"}} key="placeholder"></li>);
             }
           }
@@ -78,12 +90,14 @@ export default class Tree extends Component {
               drop={drop}
               moveToParent={moveToParent}
               parentDepth={realDepth}
+              dragRestrictions={dragRestrictions}
+              parentType={type}
             />
         );
 
         if(this.props.placeholderPos.as == "sibling"){
           if(this.props.placeholderPos.position == "after"){
-            if(/*(isOver && this.state.restrictionsPassed) &&*/ item.id === this.props.placeholderPos.id){
+            if(item.id === this.props.placeholderPos.id){
                 itemArr.push(<li style={{backgroundColor: "#ccc", height: "50px", listStyleType: "none"}} key="placeholder"></li>);
             }
           }
@@ -93,7 +107,7 @@ export default class Tree extends Component {
     }else{
       var itemArr = [];
       if(this.props.placeholderPos.as == "parent"){
-       if(/*(isOver && this.state.restrictionsPassed) &&*/ parent === this.props.placeholderPos.id){
+       if(parent === this.props.placeholderPos.id){
             itemArr.push(<li style={{backgroundColor: "#ccc", height: "50px", listStyleType: "none"}} key="placeholder"></li>);
         }
       }
