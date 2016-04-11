@@ -39,21 +39,18 @@ const target = {
 
     if(monitor.isOver({ shallow: true })){
       var restrictionsPassed = true;
-      // console.log(props.placeholderPos.as);
 
+      //TODO find a better way to do restrictions
       if(props.placeholderPos.as){
         if(props.placeholderPos.as == "sibling"){
           if(props.dragRestrictions[props.parentType].validChildren != '*'){
             if(_.indexOf(props.dragRestrictions[props.parentType].validChildren, type) == -1){
-              // console.log("valid sibling failed");
               restrictionsPassed = false;
             }
           }
         }else{
           if(props.dragRestrictions[props.item.type].validChildren != '*'){
-            // console.log(props.dragRestrictions[props.item.type].validChildren);
             if(_.indexOf(props.dragRestrictions[props.item.type].validChildren, type) == -1){
-              // console.log("valid children failed");
               restrictionsPassed = false;
             }
           }
@@ -61,25 +58,20 @@ const target = {
 
         if(props.dragRestrictions[props.item.type].validParents != '*'){
           if(_.indexOf(props.dragRestrictions[props.item.type].validParents, type) == -1){
-            // console.log("valid parents failed");
             restrictionsPassed = false;
           }
         }
 
       }
       else{
-        // console.log("no placeholderAs");
-
          if(props.dragRestrictions[props.parentType].validChildren != '*'){
           if(_.indexOf(props.dragRestrictions[props.parentType].validChildren, type) == -1){
-            console.log("valid children failed");
             restrictionsPassed = false;
           }
         }
 
         if(props.dragRestrictions[props.item.type].validParents != '*'){
           if(_.indexOf(props.dragRestrictions[props.item.type].validParents, type) == -1){
-            console.log("valid parents failed");
             restrictionsPassed = false;
           }
         }
@@ -122,9 +114,7 @@ const target = {
         //we want to add this as a child
           let restrict = true
          if(props.dragRestrictions[props.item.type].validChildren != '*'){
-          // console.log(props.dragRestrictions[props.item.type].validChildren);
           if(_.indexOf(props.dragRestrictions[props.item.type].validChildren, type) == -1){
-            console.log("valid children failed");
             restrict = false;
           }
         }
@@ -152,20 +142,146 @@ export default class Item extends Component {
     id     : PropTypes.any,
     parent : PropTypes.any,
     item   : PropTypes.object,
-    move   : PropTypes.func,
     find   : PropTypes.func
   };
+
+  static contextTypes = {
+    onItemSingleClick: React.PropTypes.func,
+    onItemDoubleClick: React.PropTypes.func,
+    onItemRename: React.PropTypes.func
+  };
+
+  constructor(props) {
+    super(props);
+    // this.handleMouseOver = this.handleMouseOver.bind(this);
+    // this.handleMouseOut = this.handleMouseOut.bind(this);
+    // this._deleteButton = this._deleteButton.bind(this);
+    // this._revertButton = this._revertButton.bind(this);
+    // this._confirmEditButton = this._confirmEditButton.bind(this);
+    // this.onEditClick = this.onEditClick.bind(this);
+    // this.onDeleteClick = this.onDeleteClick.bind(this);
+    // this.onRevertClick = this.onRevertClick.bind(this);
+    this.onChange = this.onChange.bind(this);
+    this.enableRename = this.enableRename.bind(this);
+    this.handleBlur = this.handleBlur.bind(this);
+    this.getClickHandler = this.getClickHandler.bind(this);
+    this.inputEscape = this.inputEscape.bind(this);
+    this.onKey = this.onKey.bind(this);
+    // this.collapseExpand = this.collapseExpand.bind(this);
+    // this.addExpandCollapseBtn = this.addExpandCollapseBtn.bind(this);
+  }
+
+
+  state = {
+    nodeTitleCopy: this.props.item.title,
+    nodeTitle: this.props.item.title,
+    editing: false,
+  };
+
+  getClickHandler(onClick, onDblClick, delay) {
+    var timeoutID = null;
+    delay = delay || 250;
+
+    return function (event) {
+        if (!timeoutID) {
+            timeoutID = setTimeout(function () {
+                onClick(event);
+                timeoutID = null
+            }, delay);
+        } else {
+            timeoutID = clearTimeout(timeoutID);
+            onDblClick(event);
+        }
+    };
+  }
+
+  enableRename(){
+    this.setState({ 
+        editing: true,
+        nodeTitleCopy: this.state.nodeTitle,
+    });
+  }
+
+  getInput(){
+
+    var inputStyle = {
+      backgroundColor: '#ffffff',
+     resize: "none",
+     overflow: "hidden",
+     display: "block",
+     width: "100%"
+    }
+
+    return(
+      <input
+        ref="editable"
+        type="text" 
+        className="form-control"
+        style={inputStyle} 
+        autoFocus={true}
+        value={this.state.nodeTitle} 
+        onChange={this.onChange} 
+        onKeyDown={this.onKey}
+      />
+    );
+  }
+
+  inputEscape(){
+    this.setState({
+        nodeTitle: this.state.nodeTitleCopy,
+        editing: false
+    });
+
+    // this.props.onRenameCancel(this.props.item);
+  }
+
+  onKey(e){
+    var key = e.keyCode;
+
+    if(key == 13){
+        //enter
+        this.handleBlur();
+    }
+    else if(key == 27){
+        //escape
+        this.inputEscape(); 
+    }
+    
+  }
+
+  onChange(event) {
+    this.setState({nodeTitle: event.target.value});
+  }
+
+  handleBlur(){
+    //only if title text has changed
+    if(this.state.nodeTitleCopy != this.state.nodeTitle){
+        //set editing true
+        this.setState({ editing: false });
+        this.context.onItemRename(this.props.item, this.state.nodeTitle);
+    }
+    else{
+        this.setState({ editing: false});
+    }
+  }
 
   render() {
     const {
       connectDropTarget, connectDragPreview, connectDragSource,
-      item: {id, title, children, outline_title, type, real_depth}, parent, move, 
-      find, movePlaceholderBefore, movePlaceholderAfter, placeholderPos, resetPlaceholder,
-      movePlaceholderChild, drop, moveToParent, dragRestrictions
+      item: {id, title, children, outline_title, type, real_depth}, parent, 
+      find, movePlaceholderBefore, movePlaceholderAfter, placeholderPos, 
+      resetPlaceholder, movePlaceholderChild, drop, moveToParent, 
+      dragRestrictions
     } = this.props
 
     if(this.props.isDragging){
       return null;
+    }
+
+    if(this.state.editing){
+      var titleArea = this.getInput();
+    }else{
+      var titleArea = title;
     }
 
     return connectDropTarget(connectDragPreview(
@@ -176,14 +292,13 @@ export default class Item extends Component {
             border: '1px solid #ccc',
             padding: '1em',
             cursor: "move"
-            // marginBottom: -1
           }}
-          >{title}</div>
+          onClick={this.getClickHandler(this.context.onItemSingleClick.bind(null, this.props.item), this.enableRename.bind(null, this.props.item))}
+          >{titleArea}</div>
         )}
         <Tree
           parent={id}
           children={children}
-          move={move}
           find={find}
           movePlaceholderBefore={movePlaceholderBefore}
           movePlaceholderAfter={movePlaceholderAfter}

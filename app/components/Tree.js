@@ -25,12 +25,6 @@ const target = {
 
     // if (descendantNode) return
     if (parent == props.parent || draggedId == props.parent) return
-
-
-
-    // component.setState({
-    //   restrictionsPassed: restrictionsPassed
-    // });
       
     if(props.placeholderPos.parent != props.parent){
       props.moveToParent(props.parent, props.placeholderPos, props.realDepth);
@@ -47,7 +41,7 @@ export default class Tree extends Component {
   static propTypes = {
     children  : PropTypes.array,
     parent : PropTypes.any,
-    move   : PropTypes.func.isRequired,
+    // move   : PropTypes.func.isRequired,
     find   : PropTypes.func.isRequired
   };
 
@@ -57,7 +51,7 @@ export default class Tree extends Component {
 
   render() {
     // console.log(this.state.restrictionsPassed);
-    const {connectDropTarget, children, parent, move, find, 
+    const {connectDropTarget, children, parent, find, 
       movePlaceholderBefore, movePlaceholderAfter,
     placeholderPos, resetPlaceholder, movePlaceholderChild, isOverCurrent, drop,
     moveToParent, realDepth, dragRestrictions, type} = this.props
@@ -80,7 +74,6 @@ export default class Tree extends Component {
               id={item.id}
               parent={parent}
               item={item}
-              move={move}
               find={find}
               movePlaceholderBefore={movePlaceholderBefore}
               movePlaceholderAfter={movePlaceholderAfter}
